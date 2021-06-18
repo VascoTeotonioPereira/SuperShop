@@ -12,28 +12,28 @@ namespace SuperShop.Controllers
 {
     public class ProductsController : Controller
     {
-        public IRepository _Repository;
+        public readonly IProductRepository _ProductRepository;
 
-        public ProductsController(IRepository repository)
+        public ProductsController(IProductRepository productRepository)
         {
-            _Repository = repository;
+            _ProductRepository = productRepository;
         }
 
         // GET: Products
         public IActionResult Index()
         {
-            return View( _Repository.GetProducts());
+            return View( _ProductRepository.GetAll());
         }
 
         // GET: Products/Details/5
-        public IActionResult Details(int? id)
+        public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
             {
                 return NotFound();
             }
 
-            var product = _Repository.GetProduct(id.Value);
+            var product = await _ProductRepository.GetByIdAsync(id.Value);
             if (product == null)
             {
                 return NotFound();
@@ -57,22 +57,21 @@ namespace SuperShop.Controllers
         {
             if (ModelState.IsValid)
             {
-                _Repository.AddProduct(product);
-                await _Repository.SaveAllAsync();
+                await _ProductRepository.CreateAsync(product);
                 return RedirectToAction(nameof(Index));
             }
             return View(product);
         }
 
         // GET: Products/Edit/5
-        public IActionResult Edit(int? id)
+        public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
             {
                 return NotFound();
             }
 
-            var product = _Repository.GetProduct(id.Value);
+            var product = await _ProductRepository.GetByIdAsync(id.Value);
             if (product == null)
             {
                 return NotFound();
@@ -96,12 +95,11 @@ namespace SuperShop.Controllers
             {
                 try
                 {
-                    _Repository.UpdateProduct(product);
-                    await _Repository.SaveAllAsync();
+                    await _ProductRepository.UpdateAsync(product);
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!_Repository.ProductExists(product.Id))
+                    if (! await _ProductRepository.ExistAsync(product.Id))
                     {
                         return NotFound();
                     }
@@ -116,14 +114,14 @@ namespace SuperShop.Controllers
         }
 
         // GET: Products/Delete/5
-        public IActionResult Delete(int? id)
+        public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
             {
                 return NotFound();
             }
 
-            var product = _Repository.GetProduct(id.Value);
+            var product = await _ProductRepository.GetByIdAsync(id.Value);
 
             if (product == null)
             {
@@ -138,9 +136,8 @@ namespace SuperShop.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var product = _Repository.GetProduct(id);
-            _Repository.DeleteProduct(product);
-            await _Repository.SaveAllAsync();
+            var product = await _ProductRepository.GetByIdAsync(id);
+            await _ProductRepository.DeleteAsync(product);
             return RedirectToAction(nameof(Index));
         }
     }
