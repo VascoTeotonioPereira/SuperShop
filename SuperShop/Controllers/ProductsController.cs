@@ -1,28 +1,30 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using SuperShop.Data;
 using SuperShop.Data.Entities;
+using SuperShop.Helpers;
 
 namespace SuperShop.Controllers
 {
     public class ProductsController : Controller
     {
         public readonly IProductRepository _ProductRepository;
+        private readonly IUserHelper _userHelper;
 
-        public ProductsController(IProductRepository productRepository)
+        public ProductsController(
+            IProductRepository productRepository,
+            IUserHelper userHelper)
         {
             _ProductRepository = productRepository;
+            _userHelper = userHelper;
         }
 
         // GET: Products
         public IActionResult Index()
         {
-            return View( _ProductRepository.GetAll());
+            return View(_ProductRepository.GetAll().OrderBy(p => p.Name));
         }
 
         // GET: Products/Details/5
@@ -57,6 +59,8 @@ namespace SuperShop.Controllers
         {
             if (ModelState.IsValid)
             {
+                //TODO: Modificar para o user que estiver logado
+                product.User = await _userHelper.GetUserByEmailAsync("vascotp2@gmail.com");
                 await _ProductRepository.CreateAsync(product);
                 return RedirectToAction(nameof(Index));
             }
@@ -95,11 +99,13 @@ namespace SuperShop.Controllers
             {
                 try
                 {
+                    //TODO: Modificar para o user que estiver logado
+                    product.User = await _userHelper.GetUserByEmailAsync("vascotp2@gmail.com");
                     await _ProductRepository.UpdateAsync(product);
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (! await _ProductRepository.ExistAsync(product.Id))
+                    if (!await _ProductRepository.ExistAsync(product.Id))
                     {
                         return NotFound();
                     }
