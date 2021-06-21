@@ -30,5 +30,18 @@ namespace SuperShop.Data.Entities
         public double Stock { get; set; }
 
         public User User { get; set; }
+
+        public string ImafeFullPath 
+        {
+            get 
+            {
+                if (string.IsNullOrEmpty(ImageUrl))
+                {
+                    return null;
+                }
+                return $"https://localhost:44373{ImageUrl.Substring(1)}";
+
+            }
+        }
     }
 }
