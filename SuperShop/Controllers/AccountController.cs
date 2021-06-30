@@ -76,12 +76,21 @@ namespace SuperShop.Controllers
                         Email = model.Username,
                         UserName = model.Username
                     };
+                    
 
                     var result = await _userHelper.AddUserAsync(user, model.Password);
                     if (result != IdentityResult.Success)
                     {
                         ModelState.AddModelError(string.Empty, "The user could not be created.");
                         return View(model);
+                    }
+
+                    await _userHelper.AddUserToRoleAsync(user, "Customer");
+
+                    var isInRole = await _userHelper.IsUserInRoleAsync(user, "Customer");
+                    if (!isInRole)
+                    {
+                        await _userHelper.AddUserToRoleAsync(user, "Customer");
                     }
 
                     var loginViewModel = new LoginViewModel
